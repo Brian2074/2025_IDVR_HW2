@@ -1320,7 +1320,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e60faa9a6493aea46b7a06dfd348431f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+<<<<<<< HEAD
+  apiKey: 
+=======
   apiKey: YOUR_API_KEY
+>>>>>>> parent of 29220c3 (🔑 fix(api): update API key in Conversational AI Template)
   model: gpt-5-nano
 --- !u!1 &740699839
 GameObject:
@@ -3206,7 +3210,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd71e0a1e024cc4c9cbe13295f61d66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+<<<<<<< HEAD
+  apiKey: 
+=======
   apiKey: YOUR_API_KEY
+>>>>>>> parent of 29220c3 (🔑 fix(api): update API key in Conversational AI Template)
   systemPrompt: You are a helpful context-aware voice chatbot. In the following conversation,
     you will receive audio from the user, please reply the user in audio patiently
     and naturally. Also, you will receive the description of context in text. You
