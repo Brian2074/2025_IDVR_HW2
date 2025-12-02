@@ -35,6 +35,11 @@ public class RealtimeAPIWrapper : MonoBehaviour
     public static event Action OnResponseContentPartAdded;
     public static event Action OnResponseCancelled;
     public static event Action OnConnectButtonPressed;
+    
+    // 新增：當 AI 想要執行 Function 時觸發的事件
+    public static event Action<string, string> OnFunctionCallReceived;
+    // 新增：當對話有更新時 (例如 AI 說完一句話)，通知外部
+    public static event Action<string> OnAIResponseFinished;
 
     private void Start() => AudioRecorder.OnAudioRecorded += SendAudioToAPI;
     private void OnApplicationQuit() => DisposeWebSocket();
@@ -234,17 +239,114 @@ public class RealtimeAPIWrapper : MonoBehaviour
             { "response.created", HandleResponseCreated },
             { "session.created", _ => {
                 OnSessionCreated?.Invoke();
+                SendSessionUpdate(); // 修改：連線建立後，發送 Session Update 來註冊工具
                 SendTextToAPI(systemPrompt);
             }},
             { "response.audio.done", _ => OnResponseAudioDone?.Invoke() },
             { "response.audio_transcript.done", _ => OnResponseAudioTranscriptDone?.Invoke() },
             { "response.content_part.done", _ => OnResponseContentPartDone?.Invoke() },
-            { "response.output_item.done", _ => OnResponseOutputItemDone?.Invoke() },
+            { "response.output_item.done", HandleOutputItemDone }, // 修改：改用專屬 handler 處理 Function Call
             { "response.output_item.added", _ => OnResponseOutputItemAdded?.Invoke() },
             { "response.content_part.added", _ => OnResponseContentPartAdded?.Invoke() },
             { "rate_limits.updated", _ => OnRateLimitsUpdated?.Invoke() },
             { "error", HandleError }
         };
+    }
+
+    /// <summary>
+    /// 註冊工具 (Tools) 給 OpenAI
+    /// </summary>
+    private async void SendSessionUpdate()
+    {
+        if (ws != null && ws.State == WebSocketState.Open)
+        {
+            var sessionUpdate = new
+            {
+                type = "session.update",
+                session = new
+                {
+                    tools = new[]
+                    {
+                        new
+                        {
+                            type = "function",
+                            name = "trigger_animation",
+                            description = "Trigger an animation on the avatar when the user asks for it or the context implies it.",
+                            parameters = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    animation_name = new
+                                    {
+                                        type = "string",
+                                        description = "The name of the animation to play. Options: 'wave', 'dance', 'clap'",
+                                        @enum = new[] { "wave", "dance", "clap" }
+                                    }
+                                },
+                                required = new[] { "animation_name" }
+                            }
+                        }
+                    },
+                    tool_choice = "auto"
+                }
+            };
+
+            string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(sessionUpdate);
+            byte[] messageBytes = Encoding.UTF8.GetBytes(jsonString);
+            await ws.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// 處理 Output Item Done，檢查是否有 Function Call
+    /// </summary>
+    private void HandleOutputItemDone(JObject eventMessage)
+    {
+        OnResponseOutputItemDone?.Invoke();
+
+        var item = eventMessage["item"];
+        if (item != null && item["type"]?.ToString() == "function_call")
+        {
+            string functionName = item["name"]?.ToString();
+            string arguments = item["arguments"]?.ToString();
+            string callId = item["call_id"]?.ToString();
+
+            Debug.Log($"[Function Call] {functionName} with args: {arguments}");
+
+            // 觸發事件讓外部 (AnimationHandler) 執行
+            OnFunctionCallReceived?.Invoke(functionName, arguments);
+
+            // 告訴 API 我們已經執行了 Function (這是 Realtime API 的規定流程)
+            SendFunctionOutput(callId, "{\"status\": " + "\"success\"}");
+        }
+    }
+
+    private async void SendFunctionOutput(string callId, string outputJson)
+    {
+        if (ws != null && ws.State == WebSocketState.Open)
+        {
+            var eventMessage = new
+            {
+                type = "conversation.item.create",
+                item = new
+                {
+                    type = "function_call_output",
+                    call_id = callId,
+                    output = outputJson
+                }
+            };
+
+            string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(eventMessage);
+            byte[] messageBytes = Encoding.UTF8.GetBytes(jsonString);
+            await ws.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            
+            // 觸發另一次回應，讓 AI 根據執行結果說話
+            var responseCreate = new { type = "response.create" };
+            string responseJson = Newtonsoft.Json.JsonConvert.SerializeObject(responseCreate);
+            byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
+            await ws.SendAsync(new ArraySegment<byte>(responseBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
     }
 
     /// <summary>
@@ -283,6 +385,15 @@ public class RealtimeAPIWrapper : MonoBehaviour
         {
             isResponseInProgress = false;
         }
+        
+        // 當回應結束時，將完整的 Transcript 廣播出去
+        string fullTranscript = transcriptBuffer.ToString();
+        if (!string.IsNullOrEmpty(fullTranscript))
+        {
+            Debug.Log($"[RealtimeAPI] AI Response Finished: {fullTranscript}");
+            OnAIResponseFinished?.Invoke(fullTranscript);
+        }
+
         OnResponseDone?.Invoke();
     }
 

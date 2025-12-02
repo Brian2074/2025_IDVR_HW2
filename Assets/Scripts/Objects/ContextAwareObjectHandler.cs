@@ -10,6 +10,9 @@ public class ContextAwareObjectHandler : MonoBehaviour
     [SerializeField] private string objectDescription;
 
     private RealtimeAPIWrapper realtimeAPIWrapper;
+    
+    // 新增：事件通知
+    public static event System.Action<string> OnContextChanged;
 
     void Start()
     {
@@ -22,7 +25,12 @@ public class ContextAwareObjectHandler : MonoBehaviour
         if (other.name.Contains("Hand") || other.name.Contains("PinchArea"))
         {
             string contextPrompt = $"The user is interacting with the object: {objectName}. Description: {objectDescription}.";
+            
+            // 1. 傳送給 Realtime API (讓對話知道)
             SendContextToAPI(contextPrompt);
+            
+            // 2. 觸發事件 (讓 Background LLM 知道)
+            OnContextChanged?.Invoke(contextPrompt);
         }
     }
 
@@ -31,7 +39,12 @@ public class ContextAwareObjectHandler : MonoBehaviour
         if (other.name.Contains("Hand") || other.name.Contains("PinchArea"))
         {
             string contextPrompt = $"The user has stopped interacting with the object: {objectName}.";
+            
+            // 1. 傳送給 Realtime API
             SendContextToAPI(contextPrompt);
+            
+            // 2. 觸發事件
+            OnContextChanged?.Invoke("None");
         }
     }
     # endregion
