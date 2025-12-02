@@ -916,11 +916,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: da7c46a9-a651-48c9-91fe-db4c992a91dc
+  cloudProjectId: 1e041731-1ddc-4170-a104-8113a32add8b
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 2025_IDVR_HW2
-  organizationId: 2025_idvr_assignment
+  projectName: IDVR_2025_Assignment2_Template
+  organizationId: unity_b1d8cbca390f152731df
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
