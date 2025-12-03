@@ -45,6 +45,13 @@ public class AudioRecorder : MonoBehaviour
 
     private void Update()
     {
+        // 如果 AI 正在說話，且我們不想打斷它 (或者想避免回音)，可以暫停 VAD
+        // 這裡簡單判斷：如果 AI 在說話，就不做 VAD 偵測
+        if (audioPlayer.IsAudioPlaying())
+        {
+            return;
+        }
+
         if (Microphone.IsRecording(microphoneDevice))
         {
             UpdateCurrentFrequency();

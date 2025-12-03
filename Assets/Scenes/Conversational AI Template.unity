@@ -1130,9 +1130,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dca1d49e2e478dc4d832ca7131a5b086, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: YOUR_API_KEY
+  apiKey: KEY
   model: gpt-4o-mini
-  animationHandler: {fileID: 0}
+  animationHandler: {fileID: 6776954803729336723, guid: 9613170bfe6e2914c8db68c05e117f2d, type: 3}
+  environmentHandler: {fileID: 2104487332}
 --- !u!4 &612543556
 Transform:
   m_ObjectHideFlags: 0
@@ -1367,7 +1368,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e60faa9a6493aea46b7a06dfd348431f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: YOUR_API_KEY
+  apiKey: KEY
   model: gpt-5-nano
 --- !u!1 &740699839
 GameObject:
@@ -3253,12 +3254,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd71e0a1e024cc4c9cbe13295f61d66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: YOUR_API_KEY
+  apiKey: KEY
   systemPrompt: You are a helpful context-aware voice chatbot. In the following conversation,
     you will receive audio from the user, please reply the user in audio patiently
     and naturally. Also, you will receive the description of context in text. You
     should interact with the user based on the context. Please start with greeting
-    to user.
+    to user, and say what you are capable of.
   audioRecorder: {fileID: 1197006979}
   audioPlayer: {fileID: 1793683700}
   lipsyncAudioPlayer: {fileID: 2026624555}
@@ -3483,6 +3484,52 @@ MonoBehaviour:
   _mode: 0
   _smoothing: 0
   _audioSampleRate: 24000
+--- !u!1 &2104487331
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2104487333}
+  - component: {fileID: 2104487332}
+  m_Layer: 0
+  m_Name: EnvironmentManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2104487332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2104487331}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4aef0da35645c945809823b03fb019e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  directionalLight: {fileID: 410087040}
+  magicParticlePrefab: {fileID: 150256666369875262, guid: a2ccf81a1d5b163448ebdf66b5e746d6, type: 3}
+--- !u!4 &2104487333
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2104487331}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.19548416, y: 1.3543124, z: 0.40029758}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2146536596
 GameObject:
   m_ObjectHideFlags: 0
@@ -3534,3 +3581,4 @@ SceneRoots:
   - {fileID: 1549528024}
   - {fileID: 1445175870}
   - {fileID: 1574818794}
+  - {fileID: 2104487333}

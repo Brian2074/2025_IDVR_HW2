@@ -14,6 +14,7 @@ public class BackgroundReasoningEngine : MonoBehaviour
     
     [Header("References")]
     public AnimationHandler animationHandler; // 新增：用來控制 Avatar
+    public EnvironmentHandler environmentHandler; // 新增：用來控制環境
 
     [HideInInspector] public List<Dictionary<string, string>> chatHistory = new List<Dictionary<string, string>>();
     [HideInInspector] public Queue<string> responseBuffer = new Queue<string>();
@@ -54,11 +55,16 @@ public class BackgroundReasoningEngine : MonoBehaviour
     // 組合 Prompt 並發送請求
     private void AnalyzeSituation()
     {
-        string prompt = $"The user is in a VR environment. \n" +
+        string prompt = $"The user is in a Mixed Reality (MR) environment. \n" +
                         $"Current Context/Interaction: {currentObjectContext}\n" +
                         $"The AI Assistant just said: \"{lastAIResponse}\"\n\n" +
-                        $"Based on this, determine if the avatar should perform an animation to match the context or speech.\n" +
-                        $"Available animations: 'wave', 'dance', 'clap', 'idle'.";
+                        $"Based on this, determine if the avatar should perform an animation OR if the environment should change.\n" +
+                        $"GUIDELINES:\n" +
+                        $"1. EMOTIONAL SYNC: If the AI's response is celebratory, happy, or excited, trigger 'dance' or 'clap'. If it's mysterious, trigger 'spawn_magic'.\n" +
+                        $"2. ACTION CONFIRMATION: If the AI explicitly says it is doing something (e.g., 'I'm changing the lights', 'Let me show you magic'), trigger that action.\n" +
+                        $"3. AUTONOMY: Do NOT trigger actions if the AI refused a user's command (e.g., 'I don't feel like dancing'). Only act if the AI agreed or if the emotion fits.\n" +
+                        $"Available animations: 'wave', 'dance', 'clap', 'idle'.\n" +
+                        $"Available environment actions: 'change_light_red', 'change_light_blue', 'change_light_normal', 'spawn_magic', 'clear_magic', 'none'.";
 
         // 呼叫原本的結構化請求邏輯
         StartCoroutine(SendStructuredChatRequest(prompt));
@@ -167,9 +173,15 @@ public class BackgroundReasoningEngine : MonoBehaviour
                             description = "The animation to trigger.",
                             @enum = new[] { "wave", "dance", "clap", "idle" }
                         },
+                        environment_action = new 
+                        { 
+                            type = "string", 
+                            description = "The environment action to trigger.",
+                            @enum = new[] { "change_light_red", "change_light_blue", "change_light_normal", "spawn_magic", "clear_magic", "none" }
+                        },
                         reasoning = new { type = "string" }
                     },
-                    required = new[] { "animation", "reasoning" },
+                    required = new[] { "animation", "environment_action", "reasoning" },
                     additionalProperties = false
                 },
                 strict = true
@@ -213,11 +225,16 @@ public class BackgroundReasoningEngine : MonoBehaviour
                     try 
                     {
                         var result = JsonConvert.DeserializeObject<AvatarControlResult>(json);
-                        Debug.Log($"[Analysis] Animation: {result.animation}, Reasoning: {result.reasoning}");
+                        Debug.Log($"[Analysis] Animation: {result.animation}, Env: {result.environment_action}, Reasoning: {result.reasoning}");
                         
                         if (result.animation != "idle" && animationHandler != null)
                         {
                             animationHandler.PlayAnimation(result.animation);
+                        }
+
+                        if (result.environment_action != "none" && environmentHandler != null)
+                        {
+                            environmentHandler.HandleEnvironmentAction(result.environment_action);
                         }
                     }
                     catch (System.Exception e)
@@ -258,6 +275,7 @@ public class BackgroundReasoningEngine : MonoBehaviour
     public class AvatarControlResult
     {
         public string animation;
+        public string environment_action;
         public string reasoning;
     }
 }

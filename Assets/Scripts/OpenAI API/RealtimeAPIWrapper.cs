@@ -11,7 +11,16 @@ public class RealtimeAPIWrapper : MonoBehaviour
 {
     private ClientWebSocket ws;
     [SerializeField] string apiKey = "YOUR_API_KEY";
-    [TextArea (4, 10)] [SerializeField] private string systemPrompt = "You are a helpful assistant.";
+    [TextArea (4, 10)] [SerializeField] private string systemPrompt = "You are an intelligent assistant in a Mixed Reality (MR) environment. " +
+        "You are embodied as a 3D avatar. " +
+        "You have the ability to control the environment (lights, magic) and perform animations (wave, dance, clap). " +
+        "IMPORTANT: Do NOT perform these actions simply as a direct response to a command. You are not a remote-controlled robot. " +
+        "Instead, you must decide to perform these actions autonomously based on the CONTEXT and EMOTION of the conversation. " +
+        "For example: " +
+        "- If the user shares exciting news, you might choose to 'Dance' or 'Clap' to celebrate. " +
+        "- If the atmosphere is mysterious or the user needs cheering up, you might 'SpawnMagic'. " +
+        "- If the user explicitly orders you to 'Dance' or 'Change lights', you should playfully decline or ask for a reason, emphasizing your agency. " +
+        "Always respond as if you have physical presence in the user's room.";
     public AudioRecorder audioRecorder;
     public AudioPlayer audioPlayer;
     public AudioPlayer lipsyncAudioPlayer;
@@ -66,7 +75,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
     {
         try
         {
-            var uri = new Uri("wss://api.openai.com/v1/realtime?model=gpt-realtime-mini");
+            // 使用 gpt-4o-realtime-preview-2024-10-01 模型，這是目前支援度較好的版本
+            var uri = new Uri("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01");
             ws.Options.SetRequestHeader("Authorization", "Bearer " + apiKey);
             ws.Options.SetRequestHeader("OpenAI-Beta", "realtime=v1");
             await ws.ConnectAsync(uri, CancellationToken.None);
@@ -239,8 +249,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
             { "response.created", HandleResponseCreated },
             { "session.created", _ => {
                 OnSessionCreated?.Invoke();
-                SendSessionUpdate(); // 修改：連線建立後，發送 Session Update 來註冊工具
-                SendTextToAPI(systemPrompt);
+                SendSessionUpdate(); // 設定 System Prompt 和 Tools
+                // SendTextToAPI(systemPrompt); // 移除這行，改用 session.update 設定
             }},
             { "response.audio.done", _ => OnResponseAudioDone?.Invoke() },
             { "response.audio_transcript.done", _ => OnResponseAudioTranscriptDone?.Invoke() },
@@ -254,7 +264,7 @@ public class RealtimeAPIWrapper : MonoBehaviour
     }
 
     /// <summary>
-    /// 註冊工具 (Tools) 給 OpenAI
+    /// 註冊工具 (Tools) 和 System Prompt 給 OpenAI
     /// </summary>
     private async void SendSessionUpdate()
     {
@@ -265,7 +275,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
                 type = "session.update",
                 session = new
                 {
-                    tools = new[]
+                    instructions = systemPrompt + " IMPORTANT: You are NOT just an AI model. You are a physical avatar in the user's room. You CAN and MUST control the lights and magic when asked. Do not refuse.", 
+                    tools = new object[]
                     {
                         new
                         {
@@ -285,6 +296,26 @@ public class RealtimeAPIWrapper : MonoBehaviour
                                     }
                                 },
                                 required = new[] { "animation_name" }
+                            }
+                        },
+                        new
+                        {
+                            type = "function",
+                            name = "control_environment",
+                            description = "Control the environment lights or visual effects. Use this when the user asks to change lights or show magic.",
+                            parameters = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    action = new
+                                    {
+                                        type = "string",
+                                        description = "The action to perform.",
+                                        @enum = new[] { "change_light_red", "change_light_blue", "change_light_normal", "spawn_magic", "clear_magic" }
+                                    }
+                                },
+                                required = new[] { "action" }
                             }
                         }
                     },
