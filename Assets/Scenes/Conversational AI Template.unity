@@ -1130,7 +1130,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dca1d49e2e478dc4d832ca7131a5b086, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: KEY
+  apiKey: YOUR_API_KEY
   model: gpt-4o-mini
   animationHandler: {fileID: 6776954803729336723, guid: 9613170bfe6e2914c8db68c05e117f2d, type: 3}
   environmentHandler: {fileID: 2104487332}
@@ -1368,7 +1368,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e60faa9a6493aea46b7a06dfd348431f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: KEY
+  apiKey: YOUR_API_KEY
   model: gpt-5-nano
 --- !u!1 &740699839
 GameObject:
@@ -2143,7 +2143,7 @@ MonoBehaviour:
   useRenderLods: 1
   _isLocal: 1
   _loadUserFromCdn: 0
-  _cdnUserID: 0
+  _cdnUserID: 7
   _style2DropdownIndex: 0
   _deferLoading: 0
   _assets:
@@ -3254,7 +3254,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd71e0a1e024cc4c9cbe13295f61d66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: KEY
+  apiKey: YOUR_API_KEY
   systemPrompt: You are a helpful context-aware voice chatbot. In the following conversation,
     you will receive audio from the user, please reply the user in audio patiently
     and naturally. Also, you will receive the description of context in text. You

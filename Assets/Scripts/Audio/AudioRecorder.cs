@@ -7,7 +7,7 @@ public class AudioRecorder : MonoBehaviour
     public ListeningMode listeningMode = ListeningMode.VAD;
     public int sampleRate = 24000;
     [SerializeField] private bool interruptResponseOnNewRecording = true;
-    [SerializeField] private float vadEnergyThreshold = 0.5f;
+    [SerializeField] private float vadEnergyThreshold = 0.05f;
     [SerializeField] private float vadSilenceDuration = 2f;
     private float vadLastSec = 1.0f;
     [SerializeField] private float vadFreqThreshold = 0.0f;
@@ -207,6 +207,7 @@ public class AudioRecorder : MonoBehaviour
     /// </summary>
     private void StartVADRecording()
     {
+        Debug.Log("[AudioRecorder] VAD Started - Listening...");
         if (interruptResponseOnNewRecording && !isVADRecording) 
         {
             audioPlayer.CancelAudioPlayback();
