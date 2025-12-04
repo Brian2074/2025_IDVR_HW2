@@ -75,8 +75,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
     {
         try
         {
-            // 使用 gpt-4o-realtime-preview-2024-10-01 模型，這是目前支援度較好的版本
-            var uri = new Uri("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01");
+            // 使用 gpt-4o-realtime-preview 模型 (通用名稱，避免特定日期版本過期或權限問題)
+            var uri = new Uri("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview");
             ws.Options.SetRequestHeader("Authorization", "Bearer " + apiKey);
             ws.Options.SetRequestHeader("OpenAI-Beta", "realtime=v1");
             await ws.ConnectAsync(uri, CancellationToken.None);
@@ -247,6 +247,7 @@ public class RealtimeAPIWrapper : MonoBehaviour
         {
             { "response.audio.delta", HandleAudioDelta },
             { "response.audio_transcript.delta", HandleTranscriptDelta },
+            { "response.text.delta", HandleTextDelta }, // 新增：處理純文字 Delta
             { "conversation.item.created", _ => OnConversationItemCreated?.Invoke() },
             { "response.done", HandleResponseDone },
             { "response.created", HandleResponseCreated },
@@ -360,7 +361,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
     {
         if (ws != null && ws.State == WebSocketState.Open)
         {
-            var eventMessage = new
+            // 1. 傳送 Function Output
+            var outputMessage = new
             {
                 type = "conversation.item.create",
                 item = new
@@ -370,16 +372,25 @@ public class RealtimeAPIWrapper : MonoBehaviour
                     output = outputJson
                 }
             };
-
-            string jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(eventMessage);
-            byte[] messageBytes = Encoding.UTF8.GetBytes(jsonString);
-            await ws.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            string outputJsonString = Newtonsoft.Json.JsonConvert.SerializeObject(outputMessage);
+            await ws.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(outputJsonString)), WebSocketMessageType.Text, true, CancellationToken.None);
             
-            // 觸發另一次回應，讓 AI 根據執行結果說話
-            var responseCreate = new { type = "response.create" };
+            // 稍等一下讓 Server 處理
+            await Task.Delay(50);
+
+            // 2. 強制要求回應，並且禁止再次使用工具 (tool_choice = "none")，強迫它說話
+            var responseCreate = new 
+            { 
+                type = "response.create",
+                response = new
+                {
+                    modalities = new[] { "text", "audio" },
+                    instructions = "The action has been completed. You MUST now speak to the user to confirm it.",
+                    tool_choice = "none"
+                }
+            };
             string responseJson = Newtonsoft.Json.JsonConvert.SerializeObject(responseCreate);
-            byte[] responseBytes = Encoding.UTF8.GetBytes(responseJson);
-            await ws.SendAsync(new ArraySegment<byte>(responseBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+            await ws.SendAsync(new ArraySegment<byte>(Encoding.UTF8.GetBytes(responseJson)), WebSocketMessageType.Text, true, CancellationToken.None);
         }
     }
 
@@ -407,6 +418,19 @@ public class RealtimeAPIWrapper : MonoBehaviour
         {
             transcriptBuffer.Append(transcriptPart);
             OnTranscriptReceived?.Invoke(transcriptPart);
+        }
+    }
+
+    /// <summary>
+    /// handles incoming text delta messages from api
+    /// </summary>
+    private void HandleTextDelta(JObject eventMessage)
+    {
+        string textPart = eventMessage["delta"]?.ToString();
+        if (!string.IsNullOrEmpty(textPart))
+        {
+            transcriptBuffer.Append(textPart);
+            OnTranscriptReceived?.Invoke(textPart);
         }
     }
 
@@ -449,7 +473,8 @@ public class RealtimeAPIWrapper : MonoBehaviour
         string errorMessage = eventMessage["error"]?["message"]?.ToString();
         if (!string.IsNullOrEmpty(errorMessage))
         {
-            Debug.Log("openai error: " + errorMessage);
+            Debug.LogError($"[RealtimeAPI] ERROR: {errorMessage}");
+            Debug.LogError($"[RealtimeAPI] Full Error: {eventMessage}");
         }
     }
 
