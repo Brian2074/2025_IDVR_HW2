@@ -113,11 +113,14 @@ public class RealtimeAPIWrapper : MonoBehaviour
     /// </summary>
     private async void SendAudioToAPI(string base64AudioData)
     {
+        Debug.Log($"[RealtimeAPI] SendAudioToAPI called. WS State: {ws?.State}");
+
         if (isResponseInProgress)
             SendCancelEvent();
 
         if (ws != null && ws.State == WebSocketState.Open)
         {
+            Debug.Log("[RealtimeAPI] Sending audio data to OpenAI...");
             var eventMessage = new
             {
                 type = "conversation.item.create",

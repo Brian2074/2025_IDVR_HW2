@@ -228,12 +228,18 @@ public class AudioRecorder : MonoBehaviour
     {
         if (isVADRecording)
         {
+            Debug.Log("[AudioRecorder] VAD Stopped. Processing audio...");
             int recordingLength = audioDataBuffer.Count - vadRecordingStartIndex;
             if (recordingLength > 0)
             {
                 float[] audioData = audioDataBuffer.GetRange(vadRecordingStartIndex, recordingLength).ToArray();
                 string base64AudioData = AudioProcessingUtils.ConvertFloatToPCM16AndBase64(audioData);
+                Debug.Log($"[AudioRecorder] Audio processed. Length: {audioData.Length} samples. Invoking OnAudioRecorded.");
                 OnAudioRecorded?.Invoke(base64AudioData);
+            }
+            else
+            {
+                Debug.LogWarning("[AudioRecorder] VAD Stopped but recording length is 0.");
             }
         }
         isVADRecording = false;
