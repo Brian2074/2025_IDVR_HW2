@@ -385,7 +385,7 @@ public class RealtimeAPIWrapper : MonoBehaviour
                 response = new
                 {
                     modalities = new[] { "text", "audio" },
-                    instructions = "The action has been completed. You MUST now speak to the user to confirm it.",
+                    instructions = "The action has been completed successfully. Respond to the user naturally confirming the action. Do NOT read out the JSON output or technical details.",
                     tool_choice = "none"
                 }
             };
