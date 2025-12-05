@@ -416,6 +416,12 @@ public class RealtimeAPIWrapper : MonoBehaviour
         string transcriptPart = eventMessage["delta"]?.ToString();
         if (!string.IsNullOrEmpty(transcriptPart))
         {
+            // Filter out JSON-like strings to prevent them from showing in UI
+            if (transcriptPart.Trim().StartsWith("{") || transcriptPart.Contains("\"status\":"))
+            {
+                return;
+            }
+
             transcriptBuffer.Append(transcriptPart);
             OnTranscriptReceived?.Invoke(transcriptPart);
         }
@@ -429,6 +435,12 @@ public class RealtimeAPIWrapper : MonoBehaviour
         string textPart = eventMessage["delta"]?.ToString();
         if (!string.IsNullOrEmpty(textPart))
         {
+            // Filter out JSON-like strings to prevent them from showing in UI
+            if (textPart.Trim().StartsWith("{") || textPart.Contains("\"status\":"))
+            {
+                return;
+            }
+
             transcriptBuffer.Append(textPart);
             OnTranscriptReceived?.Invoke(textPart);
         }
